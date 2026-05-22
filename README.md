@@ -78,12 +78,10 @@ sensor-data-processor/
 Requirements
 Create requirements.txt:
 
-txt
-fastapi>=0.68.0
-uvicorn>=0.15.0
-pydantic>=1.8.0
+python -r requirements.txt
+
 License
 MIT
 
-Author
+Author Luxman Madapatha
 EN5500 - Computer Systems Assignment 1
