@@ -31,7 +31,7 @@ A real-time sensor data processing system implementing asynchronous producer-con
 
 ```bash
 # Clone repository
-git clone https://github.com/Luxman-Madapatha/sensor-data-processor.git
+git clone https://github.com/Luxman-Madapatha/Real-Time-Sensor-Data-Processing.git
 cd sensor-data-processor
 
 # Install dependencies
