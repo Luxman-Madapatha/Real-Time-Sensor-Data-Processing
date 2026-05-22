@@ -23,7 +23,7 @@ A real-time sensor data processing system implementing asynchronous producer-con
 
 ```bash
 # Install dependencies
-pip install fastapi uvicorn pydantic
+pip install -r requirements.txt
 
 # Run the application
 python app.py
@@ -75,10 +75,6 @@ sensor-data-processor/
 ├── requirements.txt    # Dependencies
 ├── README.md          # Documentation
 └── LICENSE            # MIT License
-Requirements
-Create requirements.txt:
-
-python -r requirements.txt
 
 License
 MIT
