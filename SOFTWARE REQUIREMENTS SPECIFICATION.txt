@@ -1,0 +1,357 @@
+===============================================================================
+                    SOFTWARE REQUIREMENTS SPECIFICATION
+                Real-Time Sensor Data Processing System
+                     EN5500 - Computer Systems Assignment 1
+===============================================================================
+
+1. INTRODUCTION
+
+1.1 Purpose
+This document specifies the software requirements for a Real-Time Sensor Data 
+Processing System that continuously generates sensor data, processes it into 
+blocks, calculates statistical parameters, and provides real-time monitoring 
+via REST API and Server-Sent Events (SSE).
+
+1.2 Scope
+The system shall:
+- Generate simulated sensor data with configurable error/missing rates
+- Process data asynchronously using producer-consumer pattern
+- Calculate six statistical parameters per data block
+- Provide REST API endpoints for monitoring and control
+- Stream real-time updates via Server-Sent Events
+- Support runtime configuration changes
+- Handle incomplete blocks via timeout mechanism
+
+1.3 Definitions
+- Block: A collection of sensor samples (default 100) processed together
+- Valid sample: Integer between 0-100 inclusive
+- Missing sample: None value (sensor failed to read)
+- Corrupted sample: Value outside [0,100] or non-numeric error string
+- SSE: Server-Sent Events for real-time streaming
+- Timeout watchdog: Background task that flushes incomplete blocks after inactivity
+
+
+2. FUNCTIONAL REQUIREMENTS
+
+2.1 Sensor Data Generation
+
+-------------------------------------------------------------------------------
+ID      | Requirement                                    | Priority
+-------------------------------------------------------------------------------
+FR-01   | System shall generate simulated sensor         | High
+        | samples asynchronously                         |
+FR-02   | Valid samples shall be integers in range       | High
+        | [0, 100]                                       |
+FR-03   | System shall support configurable missing      | Medium
+        | data rate (default 2%)                         |
+FR-04   | System shall support configurable error/       | Medium
+        | corruption rate (default 5%)                   |
+FR-05   | Missing samples shall be represented as None   | High
+FR-06   | Corrupted samples shall be represented as      | High
+        | error strings ("ERROR", "INVALID") or out-     |
+        | of-range numbers (-1, 101)                     |
+-------------------------------------------------------------------------------
+
+2.2 Data Processing
+
+-------------------------------------------------------------------------------
+ID      | Requirement                                    | Priority
+-------------------------------------------------------------------------------
+FR-07   | System shall process data into blocks of       | High
+        | configurable size (default 100)                |
+FR-08   | System shall use asynchronous producer-        | High
+        | consumer pattern for processing                |
+FR-09   | System shall maintain bounded queue            | High
+        | (default 1000) between producer and consumer   |
+FR-10   | System shall detect and count queue overflow   | Medium
+        | events                                         |
+FR-11   | System shall support runtime block size        | High
+        | changes without restart                        |
+FR-12   | When decreasing block size, system shall       | Medium
+        | split current block into smaller blocks        |
+FR-13   | When increasing block size, system shall       | Medium
+        | continue accumulating current block            |
+FR-14   | System shall support force-processing current  | Medium
+        | block before size change                       |
+-------------------------------------------------------------------------------
+
+2.3 Statistical Calculations (Part a)
+
+-------------------------------------------------------------------------------
+ID      | Requirement                                    | Priority
+-------------------------------------------------------------------------------
+FR-15   | System shall calculate maximum value from      | High
+        | valid samples                                  |
+FR-16   | System shall calculate minimum value from      | High
+        | valid samples                                  |
+FR-17   | System shall calculate mean (average) from     | High
+        | valid samples                                  |
+FR-18   | System shall calculate sample standard         | High
+        | deviation using Bessel's correction (N-1)      |
+FR-19   | System shall count missing samples             | High
+        | (None values)                                  |
+FR-20   | System shall count corrupted samples           | High
+        | (invalid values)                               |
+FR-21   | System shall return None for statistics when   | Medium
+        | no valid samples exist                         |
+FR-22   | System shall return 0.0 for standard          | Low
+        | deviation when only 1 valid sample exists      |
+-------------------------------------------------------------------------------
+
+2.4 Console Output (Part a)
+
+-------------------------------------------------------------------------------
+ID      | Requirement                                    | Priority
+-------------------------------------------------------------------------------
+FR-23   | System shall print formatted block summary     | High
+        | after each processed block                     |
+FR-24   | Output shall include: max, min, mean, sample   | High
+        | std deviation, missing count, corrupted count  |
+FR-25   | Output shall show valid samples vs expected   | Medium
+        | block size                                     |
+FR-26   | Output shall display processing time in        | Medium
+        | milliseconds                                   |
+FR-27   | Incomplete blocks shall be marked with         | Medium
+        | [TIMEOUT / INCOMPLETE] tag                    |
+-------------------------------------------------------------------------------
+
+2.5 Timeout Watchdog (Part c)
+
+-------------------------------------------------------------------------------
+ID      | Requirement                                    | Priority
+-------------------------------------------------------------------------------
+FR-28   | System shall monitor time since last sample    | High
+        | arrival                                        |
+FR-29   | System shall flush incomplete block after      | High
+        | configurable timeout (default 5 seconds)       |
+FR-30   | System shall count timeout-triggered flushes   | Medium
+FR-31   | System shall prevent immediate re-flush after  | Low
+        | timeout flush                                  |
+FR-32   | Watchdog shall run as independent background   | High
+        | task                                           |
+-------------------------------------------------------------------------------
+
+2.6 REST API Endpoints (Part c)
+
+-------------------------------------------------------------------------------
+ID      | Endpoint                           | Method | Priority
+-------------------------------------------------------------------------------
+FR-33   | /                                  | GET    | High
+        | (API documentation)                |        |
+FR-34   | /status                            | GET    | High
+        | (System status and metrics)        |        |
+FR-35   | /stats/latest                      | GET    | High
+        | (Most recent block statistics)     |        |
+FR-36   | /stats/all                         | GET    | Medium
+        | (All completed blocks - last 10)   |        |
+FR-37   | /stream                            | GET    | High
+        | (SSE stream of block updates)      |        |
+FR-38   | /config/block-size                 | GET    | High
+        | (Get block size configuration)     |        |
+FR-39   | /config/block-size                 | POST   | High
+        | (Change block size at runtime)     |        |
+FR-40   | /config/block-size/validate        | POST   | Medium
+        | (Validate block size)              |        |
+FR-41   | /config/block-size/force-process   | POST   | Medium
+        | (Force process current block)      |        |
+FR-42   | /control/start                     | POST   | High
+        | (Start background processing)      |        |
+FR-43   | /control/stop                      | POST   | High
+        | (Stop background processing)       |        |
+FR-44   | /control/reset                     | POST   | High
+        | (Reset entire system)              |        |
+-------------------------------------------------------------------------------
+
+2.7 Server-Sent Events
+
+-------------------------------------------------------------------------------
+ID      | Requirement                                    | Priority
+-------------------------------------------------------------------------------
+FR-45   | System shall stream real-time block updates   | High
+        | via SSE                                        |
+FR-46   | Each event shall contain complete Statistics  | High
+        | object as JSON                                 |
+FR-47   | Event data shall include block size at        | Medium
+        | processing time                                |
+FR-48   | Stream shall maintain connection with         | Medium
+        | keep-alive headers                             |
+-------------------------------------------------------------------------------
+
+
+3. NON-FUNCTIONAL REQUIREMENTS
+
+3.1 Performance
+
+-------------------------------------------------------------------------------
+ID      | Requirement                                    | Target
+-------------------------------------------------------------------------------
+NFR-01  | Sample generation latency                      | < 1ms per sample
+NFR-02  | Block processing time                          | Measured and reported
+NFR-03  | Queue overflow handling                        | Dropped samples counted
+NFR-04  | Concurrent task execution                      | Independent tasks
+NFR-05  | API response time                              | < 100ms
+-------------------------------------------------------------------------------
+
+3.2 Reliability
+
+-------------------------------------------------------------------------------
+ID      | Requirement                                    | Priority
+-------------------------------------------------------------------------------
+NFR-06  | System shall never crash due to invalid data   | High
+NFR-07  | System shall handle queue full condition       | High
+        | gracefully                                     |
+NFR-08  | System shall recover from consumer exceptions  | Medium
+        | without stopping producer                      |
+NFR-09  | Timeout watchdog shall not interfere with      | High
+        | normal operation                               |
+-------------------------------------------------------------------------------
+
+3.3 Maintainability
+
+-------------------------------------------------------------------------------
+ID      | Requirement                                    | Priority
+-------------------------------------------------------------------------------
+NFR-10  | Code shall include comprehensive docstrings    | High
+NFR-11  | Type hints shall be used for all function      | High
+        | parameters and returns                         |
+NFR-12  | Configuration parameters shall be centralized  | Medium
+        | in __init__ method                             |
+NFR-13  | Code shall follow PEP 8 style guidelines       | Medium
+-------------------------------------------------------------------------------
+
+3.4 Concurrency
+
+-------------------------------------------------------------------------------
+ID      | Requirement                                    | Priority
+-------------------------------------------------------------------------------
+NFR-14  | Shared state shall be protected with           | High
+        | asyncio.Lock                                   |
+NFR-15  | Producer and consumer shall run as independent | High
+        | asyncio tasks                                  |
+NFR-16  | Queue operations shall be non-blocking with    | Medium
+        | timeout                                        |
+-------------------------------------------------------------------------------
+
+3.5 Compatibility
+
+-------------------------------------------------------------------------------
+ID      | Requirement                                    | Priority
+-------------------------------------------------------------------------------
+NFR-17  | System shall run on Python 3.9+                | High
+NFR-18  | Dependencies: FastAPI, uvicorn, pydantic       | High
+NFR-19  | API shall be accessible from any HTTP client   | High
+-------------------------------------------------------------------------------
+
+
+4. DATA REQUIREMENTS
+
+4.1 Statistics Data Structure
+
+{
+    "block_number": int,
+    "max_value": Optional[float],
+    "min_value": Optional[float],
+    "average": Optional[float],
+    "std_deviation": Optional[float],
+    "missing_samples": int,
+    "corrupted_samples": int,
+    "valid_samples": int,
+    "processing_time_ms": float,
+    "timestamp": float
+}
+
+4.2 Status Data Structure
+
+{
+    "is_running": bool,
+    "block_size": int,
+    "block_timeout_seconds": float,
+    "min_block_size": int,
+    "max_block_size": int,
+    "current_block_size": int,
+    "blocks_completed": int,
+    "queue_size": int,
+    "queue_max_size": int,
+    "queue_overflow_count": int,
+    "timeout_flush_count": int,
+    "remaining_needed": int,
+    "latest_block": Optional[dict]
+}
+
+4.3 Configuration Constraints
+
+-------------------------------------------------------------------------------
+Parameter               | Minimum | Maximum | Default
+-------------------------------------------------------------------------------
+block_size              | 1       | 10000   | 100
+max_queue_size          | 1       | 100000  | 1000
+block_timeout_seconds   | 0.5     | 3600    | 5.0
+error_rate              | 0.0     | 1.0     | 0.05
+missing_rate            | 0.0     | 1.0     | 0.02
+-------------------------------------------------------------------------------
+
+
+5. ERROR HANDLING REQUIREMENTS
+
+-------------------------------------------------------------------------------
+ID      | Requirement                                    | Priority
+-------------------------------------------------------------------------------
+ER-01   | Invalid block size changes shall return        | High
+        | HTTP 400                                       |
+ER-02   | Queue overflow shall increment counter,        | High
+        | not crash                                      |
+ER-03   | Consumer exceptions shall be caught, logged,   | Medium
+        | and continue                                   |
+ER-04   | Producer exceptions shall be caught, logged,   | Medium
+        | and continue                                   |
+ER-05   | Watchdog exceptions shall be caught, logged,   | Medium
+        | and continue                                   |
+ER-06   | Invalid API requests shall return appropriate  | High
+        | HTTP status codes                              |
+-------------------------------------------------------------------------------
+
+
+6. ACCEPTANCE CRITERIA
+
+The system is considered complete when:
+
+AC-01: System starts successfully and shows startup banner
+AC-02: Sensor data generation produces mixed valid/missing/corrupted samples
+AC-03: Blocks are processed with correct statistics (validated N-1 std deviation)
+AC-04: Formatted output appears after each block
+AC-05: All API endpoints return expected responses
+AC-06: SSE stream sends updates when blocks complete
+AC-07: Block size can be changed at runtime without restart
+AC-08: Timeout watchdog flushes incomplete blocks after inactivity
+AC-09: Queue overflow does not crash system
+AC-10: System can be stopped and started via API
+AC-11: Reset clears all state correctly
+
+
+7. TRACEABILITY MATRIX
+
+-------------------------------------------------------------------------------
+Assignment Part     | Requirements Covered
+-------------------------------------------------------------------------------
+Part (a)            | FR-15 to FR-27 (Statistics & Console Output)
+Part (b)            | FR-07 to FR-14, NFR-01 to NFR-05 (Async Processing)
+Part (c)            | FR-28 to FR-48, UI-05 to UI-07 (API & Timeout)
+Part (d)            | NFR-06 to NFR-16, ER-01 to ER-06 (Design Improvements)
+-------------------------------------------------------------------------------
+
+
+8. GLOSSARY
+
+Bessel's correction  : Use of N-1 instead of N when calculating sample variance
+Producer-consumer    : Pattern where one task produces data and another consumes it
+Queue overflow       : When queue is full and new data cannot be added
+Server-Sent Events   : HTTP streaming protocol for real-time updates
+Watchdog             : Background task monitoring system health
+Asyncio              : Python's asynchronous I/O framework
+
+
+===============================================================================
+Document Version: 1.0
+Last Updated: 2024
+Status: Approved for Implementation
+===============================================================================
