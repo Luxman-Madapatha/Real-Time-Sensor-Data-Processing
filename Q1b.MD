@@ -35,9 +35,3 @@ If the system is unable to process data at the rate it arrives, several critical
 
 * 
 **Cascading Failure:** Downstream systems or services that depend on the processed data from this sensor may also malfunction, creating a chain reaction of failures throughout the broader computer system.
-
-
-
----
-
-*To help me guide you further, are you planning to incorporate these performance considerations into the report's "System Design Improvements" section, or would you like to focus on refining the code simulation first?*
