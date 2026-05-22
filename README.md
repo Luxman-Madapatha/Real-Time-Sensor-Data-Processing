@@ -71,10 +71,11 @@ BLOCK #42
 Project Structure
 text
 sensor-data-processor/
-├── app.py              # Main application
-├── requirements.txt    # Dependencies
-├── README.md          # Documentation
-└── LICENSE            # MIT License
+├── app.py               # Main application
+├── requirements.txt     # Dependencies
+├── README.md            # Documentation
+└── LICENSE              # MIT License
+    change_block_size.py # Change the block size
 
 License
 MIT
