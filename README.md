@@ -19,23 +19,71 @@ A real-time sensor data processing system implementing asynchronous producer-con
 - **SSE Streaming** - Real-time block updates via Server-Sent Events
 - **Formatted Console Output** - Clean table display of all statistics per block
 
-## Tech Stack
-
-- Python 3.9+
-- FastAPI - Web framework
-- Uvicorn - ASGI server
-- Pydantic - Data validation
-- Asyncio - Concurrent processing
-
-## Installation
+## Quick Start
 
 ```bash
-# Clone repository
-git clone https://github.com/Luxman-Madapatha/Real-Time-Sensor-Data-Processing.git
-cd sensor-data-processor
-
 # Install dependencies
-pip install -r requirements.txt
+pip install fastapi uvicorn pydantic
 
-# Run application
+# Run the application
 python app.py
+The server will start at http://localhost:8080
+
+API Endpoints
+Method	Endpoint	Description
+GET	/	API documentation
+GET	/status	System status and metrics
+GET	/stats/latest	Latest block statistics
+GET	/stats/all	All completed blocks
+GET	/stream	SSE real-time stream
+POST	/config/block-size	Change block size
+POST	/control/start	Start processing
+POST	/control/stop	Stop processing
+POST	/control/reset	Reset system
+Usage Examples
+Change Block Size
+bash
+curl -X POST http://localhost:8080/config/block-size \
+  -H "Content-Type: application/json" \
+  -d '{"new_size": 50, "force_process": false}'
+Get System Status
+bash
+curl http://localhost:8080/status
+Stream Real-time Updates
+bash
+curl http://localhost:8080/stream
+Console Output
+When a block is processed, you'll see:
+
+text
+======================================================================
+BLOCK #42
+======================================================================
+  Valid Samples:     95/100
+  Max Value:         98
+  Min Value:         12
+  Mean:              54.32
+  Std Deviation:     23.45
+  Missing Samples:   3
+  Corrupted Samples: 2
+  Processing Time:   2.34 ms
+======================================================================
+Project Structure
+text
+sensor-data-processor/
+├── app.py              # Main application
+├── requirements.txt    # Dependencies
+├── README.md          # Documentation
+└── LICENSE            # MIT License
+Requirements
+Create requirements.txt:
+
+txt
+fastapi>=0.68.0
+uvicorn>=0.15.0
+pydantic>=1.8.0
+License
+MIT
+
+Author
+EN5500 - Computer Systems Assignment 1
