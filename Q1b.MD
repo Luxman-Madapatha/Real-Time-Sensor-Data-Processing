@@ -4,8 +4,8 @@ Part (b): Performance Analysis Under High Data Rate
 
 When the data arrival rate significantly increases, the system faces several resource challenges:
 
-* 
-**Processor Utilization:** The CPU must compute statistical parameters—such as maximum, minimum, mean, and standard deviation—at a speed equal to or greater than the data arrival rate. At very high rates, the CPU remains continuously occupied with computation, leaving no idle time and potentially leading to system overload.
+ 
+* **Processor Utilization:** The CPU must compute statistical parameters—such as maximum, minimum, mean, and standard deviation—at a speed equal to or greater than the data arrival rate. At very high rates, the CPU remains continuously occupied with computation, leaving no idle time and potentially leading to system overload.
 
 
 * 
